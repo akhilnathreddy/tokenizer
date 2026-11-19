@@ -56,7 +56,9 @@ function bpeLabel(repr) {
     return visible(strictDecoder.decode(bytes));
   } catch {
     // incomplete UTF-8 sequence: part of a multi-byte character
-    return [...bytes].map((b) => `<span class="hexbyte">${hex(b)}</span>`).join(" ");
+    return [...bytes]
+      .map((b) => (b < 128 ? visible(String.fromCharCode(b)) : `<span class="hexbyte">${hex(b)}</span>`))
+      .join("");
   }
 }
 
