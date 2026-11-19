@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>toklab · Tokenizer Lab</title>
+  <meta name="description" content="Word-level, WordPiece and byte-level BPE tokenizers written from scratch in Python, simulated step by step in the browser.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect x='2' y='9' width='12' height='14' rx='3' fill='%233a5bd9'/><rect x='18' y='9' width='12' height='14' rx='3' fill='%23e8833a'/></svg>">
+</head>
+<body>
+  <header class="top">
+    <div class="brand">
+      <span class="logo" aria-hidden="true"><i></i><i></i></span>
+      <div>
+        <h1>toklab</h1>
+        <p class="tagline">LLM tokenizers written from scratch in Python, simulated step by step.</p>
+      </div>
+    </div>
+    <div class="top-right">
+      <span id="status" class="status busy" role="status">Starting…</span>
+      <a class="gh" href="https://github.com/akhilnathreddy/tokenizer" target="_blank" rel="noopener">GitHub</a>
+    </div>
+  </header>
+
+  <nav class="tabs" role="tablist">
+    <button role="tab" class="tab active" data-tab="encode" aria-selected="true">Encode</button>
+    <button role="tab" class="tab" data-tab="train" aria-selected="false">Train</button>
+    <button role="tab" class="tab" data-tab="compare" aria-selected="false">Compare</button>
+  </nav>
+
+  <main>
+    <!-- ============================================================ ENCODE -->
+    <section id="tab-encode" class="tab-panel active">
+      <p class="lede">Type some text and watch it travel through the tokenizer pipeline: normalization,
+        pre-tokenization, bytes, sub-word merges and finally the ids a model sees.</p>
+
+      <div class="card input-card">
+        <div class="row between wrap">
+          <div class="seg" id="encode-model" role="radiogroup" aria-label="Tokenizer">
+            <button data-model="word">Word</button>
+            <button data-model="wordpiece">WordPiece</button>
+            <button data-model="bpe" class="on">BPE</button>
+            <button data-model="gpt2">GPT-2</button>
+          </div>
+          <label class="toggle"><input type="checkbox" id="raw-bytes"> Show GPT-2 byte symbols (Ġ = space)</label>
+        </div>
+        <p class="model-note" id="model-note"></p>
+        <textarea id="encode-text" rows="3" maxlength="2000" spellcheck="false">Tokenizers turn text into numbers. Unbelievable, isn't it? 🤖</textarea>
+        <div class="row wrap samples" id="samples"></div>
+      </div>
+
+      <div class="player card" id="encode-player">
+        <div class="controls">
+          <button class="icon" data-act="first" title="First step" aria-label="First step">⏮</button>
+          <button class="icon" data-act="prev" title="Previous step" aria-label="Previous step">◀</button>
+          <button class="icon play" data-act="play" title="Play / pause" aria-label="Play">▶</button>
+          <button class="icon" data-act="next" title="Next step" aria-label="Next step">▶|</button>
+          <button class="icon" data-act="last" title="Last step" aria-label="Last step">⏭</button>
+        </div>
+        <input type="range" class="scrub" min="0" max="0" value="0" aria-label="Step">
+        <select class="speed" aria-label="Speed">
+          <option value="1100">Slow</option>
+          <option value="600" selected>Normal</option>
+          <option value="250">Fast</option>
+        </select>
+        <p class="caption" aria-live="polite"></p>
+      </div>
+
+      <div id="pipeline" class="pipeline"></div>
+    </section>
+
+    <!-- ============================================================= TRAIN -->
+    <section id="tab-train" class="tab-panel">
+      <p class="lede">Train a sub-word tokenizer on a corpus and replay every merge. BPE merges the most
+        <em>frequent</em> pair; WordPiece merges the pair with the best <em>likelihood score</em>
+        <code>count(ab) / (count(a)·count(b))</code>.</p>
+
+      <div class="card train-config">
+        <div class="row wrap gap">
+          <div class="seg" id="train-model" role="radiogroup" aria-label="Algorithm">
+            <button data-model="bpe" class="on">BPE</button>
+            <button data-model="wordpiece">WordPiece</button>
+          </div>
+          <label class="slider">Vocab size <input type="range" id="train-size" min="260" max="1000" step="10" value="400"> <b id="train-size-val">400</b></label>
+          <button class="primary" id="train-run">Train</button>
+        </div>
+        <details>
+          <summary>Training corpus (editable)</summary>
+          <textarea id="train-corpus" rows="8" spellcheck="false"></textarea>
+        </details>
+      </div>
+
+      <div class="player card" id="train-player" hidden>
+        <div class="controls">
+          <button class="icon" data-act="first" title="First step" aria-label="First step">⏮</button>
+          <button class="icon" data-act="prev" title="Previous step" aria-label="Previous step">◀</button>
+          <button class="icon play" data-act="play" title="Play / pause" aria-label="Play">▶</button>
+          <button class="icon" data-act="next" title="Next step" aria-label="Next step">▶|</button>
+          <button class="icon" data-act="last" title="Last step" aria-label="Last step">⏭</button>
+        </div>
+        <input type="range" class="scrub" min="0" max="0" value="0" aria-label="Merge step">
+        <select class="speed" aria-label="Speed">
+          <option value="900">Slow</option>
+          <option value="350" selected>Normal</option>
+          <option value="80">Fast</option>
+          <option value="15">Turbo</option>
+        </select>
+        <p class="caption" aria-live="polite"></p>
+      </div>
+
+      <div id="train-view" class="train-grid" hidden>
+        <div class="card" id="train-next"></div>
+        <div class="card" id="train-stats"></div>
+        <div class="card" id="train-candidates"></div>
+        <div class="card" id="train-words"></div>
+        <div class="card" id="train-merges"></div>
+      </div>
+    </section>
+
+    <!-- =========================================================== COMPARE -->
+    <section id="tab-compare" class="tab-panel">
+      <p class="lede">The same text under four tokenizers. Word-level needs <code>&lt;unk&gt;</code> for anything unseen,
+        WordPiece only fails on unseen characters, and byte-level BPE never fails. GPT-2's 50k vocabulary
+        gives the shortest sequences.</p>
+      <div class="card">
+        <textarea id="compare-text" rows="3" maxlength="2000" spellcheck="false">The farmer's daughter is learning tokenization in Hyderabad. नमस्ते 👋 Numbers like 12345 split oddly!</textarea>
+        <div class="row"><button class="primary" id="compare-run">Compare</button></div>
+      </div>
+      <div id="compare-view" class="compare"></div>
+    </section>
+  </main>
+
+  <footer>
+    All tokenization runs in your browser: the page loads toklab's Python source into
+    <a href="https://pyodide.org" target="_blank" rel="noopener">Pyodide</a>. The word, WordPiece and BPE models are trained on a
+    small sample corpus when the page opens; GPT-2 uses OpenAI's published vocabulary.
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/pyodide/v0.27.7/full/pyodide.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
