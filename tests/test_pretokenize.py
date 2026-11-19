@@ -35,15 +35,17 @@ def test_gpt2_split_known_example():
     assert gpt2_split("x\n\n") == ["x", "\n\n"]
 
 
-regex = pytest.importorskip("regex")
+@pytest.fixture(scope="module")
+def regex():
+    return pytest.importorskip("regex")
 
 
 @pytest.mark.parametrize("text", SAMPLES)
-def test_gpt2_split_matches_regex(text):
+def test_gpt2_split_matches_regex(regex, text):
     assert gpt2_split(text) == regex.findall(GPT2_PATTERN, text)
 
 
-def test_gpt2_split_matches_regex_fuzz():
+def test_gpt2_split_matches_regex_fuzz(regex):
     alphabet = "ab Z9 '\t\n.,!é字🤖 ½_-'stmdlrve"
     rng = random.Random(0)
     for _ in range(3000):
