@@ -1,0 +1,43 @@
+Language models do not read letters the way people do. Before a model sees any text, a tokenizer cuts the text into pieces called tokens and replaces every token with a number. The model only ever sees those numbers.
+
+The simplest tokenizer splits text into words. Every different word becomes one entry in the vocabulary. This works well for common words, but the vocabulary grows without limit, and any word that was not seen during training becomes an unknown token. A model that sees the unknown token cannot tell a rare name from a typo or from a new word.
+
+The opposite idea is to split text into single characters. Now nothing is ever unknown, but the sequences become very long, and the model must learn to spell every word from scratch. Long sequences are slow and expensive, because the cost of attention grows with the length of the input.
+
+Sub-word tokenizers sit between these two extremes. Frequent words stay whole, while rare words are broken into smaller pieces that the model has already seen. The word "tokenization" might become "token" and "ization", and the word "unbelievable" might become "un", "believ" and "able". The pieces carry meaning, and they can be combined to build words that never appeared in the training data.
+
+Byte pair encoding is the most popular way to learn these pieces. It starts with a vocabulary of single bytes. Then it counts every pair of neighbouring tokens in the training text and merges the most frequent pair into a new token. It repeats this again and again: count the pairs, merge the most frequent pair, add the new token to the vocabulary. Each merge is remembered in order. After thousands of merges the vocabulary contains common words, word endings, prefixes, numbers and pieces of code.
+
+To encode new text, the tokenizer splits it into bytes and applies the remembered merges in the same order in which they were learned. The earliest merges are applied first. Because the starting vocabulary contains all 256 bytes, every possible input can be encoded, including emoji, accented letters and text in any language. Nothing is ever unknown.
+
+WordPiece is a close relative of byte pair encoding. Instead of merging the most frequent pair, it merges the pair that most increases the likelihood of the training data. A pair scores highly when the two parts appear together much more often than they appear apart. When WordPiece encodes a word, it repeatedly takes the longest piece from the vocabulary that matches the start of the remaining word. Pieces that continue a word are written with two hash marks in front, so "playing" might become "play" and "##ing".
+
+Before any of this happens, the text is normalized and pre-tokenized. Normalization can change the text to lower case, remove accents, or make sure that the same character is always stored in the same way. Pre-tokenization splits the text into rough chunks, usually at spaces and punctuation, so that merges never cross the boundary between two words. The tokenizer used by GPT-2 keeps the space in front of a word as part of the word, so " the" and "the" are different tokens.
+
+The choice of tokenizer changes how a model behaves. A model with a small vocabulary needs more tokens for the same sentence. A model whose tokenizer was trained mostly on English may need three or four times as many tokens for a sentence in Hindi, Telugu or Japanese. Numbers are often split in strange places, which is one reason why language models find arithmetic hard. Even the space at the start of a word can change the answer a model gives.
+
+The cat sat on the mat. The dog sat on the log. The bird sang in the tree, and the children played in the garden until the sun went down. They played and played, laughing and running, while the older children were reading and the teachers were talking about the weather. Playing outside is better than reading inside, said one child. Reading is better than playing, said another.
+
+In the morning the farmer walks to the field. He walks slowly, because the field is far and the morning is cold. The farmer's daughter walks with him. She is learning how to plant seeds, how to water them, and how to wait. Waiting is the hardest part of farming. The seeds are planted, the water is given, and then the farmer waits for the rain and the sun to do the rest.
+
+def count_pairs(tokens):
+    counts = {}
+    for left, right in zip(tokens, tokens[1:]):
+        counts[(left, right)] = counts.get((left, right), 0) + 1
+    return counts
+
+def merge(tokens, pair, new_token):
+    result = []
+    i = 0
+    while i < len(tokens):
+        if i + 1 < len(tokens) and (tokens[i], tokens[i + 1]) == pair:
+            result.append(new_token)
+            i += 2
+        else:
+            result.append(tokens[i])
+            i += 1
+    return result
+
+In 2019 the vocabulary of GPT-2 had 50257 tokens. Later models use vocabularies of 100000, 128000 or even 200000 tokens. A larger vocabulary makes sequences shorter, but every extra token needs its own row in the embedding table, and rare tokens are seen less often during training.
+
+Tokenizers are small programs, but they shape everything that comes after them. Understanding how text becomes numbers is the first step towards understanding how a language model reads, writes and sometimes fails.
