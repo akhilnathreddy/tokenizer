@@ -142,6 +142,7 @@ class ByteLevelBPE(Tokenizer):
                 "corpus": {
                     "characters": sum(len(c.decode("utf-8", "replace")) * counts[c] for c in chunks),
                     "bytes": total_tokens,
+                    "tokens": total_tokens,
                     "chunks": sum(freqs),
                     "unique_chunks": len(chunks),
                 },

@@ -86,7 +86,8 @@ class WordPiece(Tokenizer):
         tracked = list(range(min(trace_words, len(words))))
         if trace:
             rec = {
-                "corpus": {"words": sum(freqs), "unique_words": len(words), "alphabet": len(vocab) - len(specials)},
+                "corpus": {"words": sum(freqs), "unique_words": len(words), "alphabet": len(vocab) - len(specials),
+                           "tokens": sum(len(s) * f for s, f in zip(splits, freqs))},
                 "words": [{"text": words[i], "freq": freqs[i], "parts": [vocab[u] for u in splits[i]]} for i in tracked],
                 "steps": [],
             }
